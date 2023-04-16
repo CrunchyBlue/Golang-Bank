@@ -20,38 +20,38 @@ var testQueries *Queries
 var testDB *sql.DB
 
 func createRandomAccount() (Account, CreateAccountParams, error) {
-	params := CreateAccountParams{
+	arg := CreateAccountParams{
 		Owner:    util.RandomOwner(),
 		Balance:  util.RandomMoney(),
 		Currency: util.RandomCurrency(),
 	}
 
-	account, err := testQueries.CreateAccount(context.Background(), params)
+	account, err := testQueries.CreateAccount(context.Background(), arg)
 
-	return account, params, err
+	return account, arg, err
 }
 
 func createRandomEntry(accountId int64) (Entry, CreateEntryParams, error) {
-	params := CreateEntryParams{
+	arg := CreateEntryParams{
 		AccountID: accountId,
 		Amount:    util.RandomMoney(),
 	}
 
-	entry, err := testQueries.CreateEntry(context.Background(), params)
+	entry, err := testQueries.CreateEntry(context.Background(), arg)
 
-	return entry, params, err
+	return entry, arg, err
 }
 
 func createRandomTransfer(sourceAccountId int64, destinationAccountId int64) (Transfer, CreateTransferParams, error) {
-	params := CreateTransferParams{
+	arg := CreateTransferParams{
 		DestinationAccountID: destinationAccountId,
 		SourceAccountID:      sourceAccountId,
 		Amount:               util.RandomMoney(),
 	}
 
-	transfer, err := testQueries.CreateTransfer(context.Background(), params)
+	transfer, err := testQueries.CreateTransfer(context.Background(), arg)
 
-	return transfer, params, err
+	return transfer, arg, err
 }
 
 func TestMain(m *testing.M) {

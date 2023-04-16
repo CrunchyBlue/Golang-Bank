@@ -15,7 +15,7 @@ func TestTransfer(t *testing.T) {
 
 	fmt.Println(">> before:", account1.Balance, account2.Balance)
 
-	n := 5
+	n := 10
 	amount := int64(10)
 
 	errs := make(chan error)
@@ -23,11 +23,13 @@ func TestTransfer(t *testing.T) {
 
 	for i := 0; i < n; i++ {
 		go func() {
-			result, err := store.TransferTx(context.Background(), TransferTxParams{
-				SourceAccountID:      account1.ID,
-				DestinationAccountID: account2.ID,
-				Amount:               amount,
-			})
+			result, err := store.TransferTx(
+				context.Background(), TransferTxParams{
+					SourceAccountID:      account1.ID,
+					DestinationAccountID: account2.ID,
+					Amount:               amount,
+				},
+			)
 
 			errs <- err
 			results <- result
@@ -131,11 +133,13 @@ func TestTransferDeadlock(t *testing.T) {
 		}
 
 		go func() {
-			_, err := store.TransferTx(context.Background(), TransferTxParams{
-				SourceAccountID:      sourceAccountID,
-				DestinationAccountID: destinationAccountID,
-				Amount:               amount,
-			})
+			_, err := store.TransferTx(
+				context.Background(), TransferTxParams{
+					SourceAccountID:      sourceAccountID,
+					DestinationAccountID: destinationAccountID,
+					Amount:               amount,
+				},
+			)
 
 			errs <- err
 		}()

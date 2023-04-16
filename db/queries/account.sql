@@ -16,7 +16,7 @@ FROM account
 WHERE id = $1
     FOR NO KEY UPDATE;
 
--- name: ListAccounts :many
+-- name: GetAccounts :many
 SELECT *
 FROM account
 ORDER BY id

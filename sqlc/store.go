@@ -49,7 +49,7 @@ type TransferTxResult struct {
 	ToEntry            Entry    `json:"to_entry"`
 }
 
-func (store *Store) TransferTx(ctx context.Context, params TransferTxParams) (TransferTxResult, error) {
+func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
 	err := store.execTx(
@@ -58,9 +58,9 @@ func (store *Store) TransferTx(ctx context.Context, params TransferTxParams) (Tr
 
 			result.Transfer, err = q.CreateTransfer(
 				ctx, CreateTransferParams{
-					SourceAccountID:      params.SourceAccountID,
-					DestinationAccountID: params.DestinationAccountID,
-					Amount:               params.Amount,
+					SourceAccountID:      arg.SourceAccountID,
+					DestinationAccountID: arg.DestinationAccountID,
+					Amount:               arg.Amount,
 				},
 			)
 			if err != nil {
@@ -69,8 +69,8 @@ func (store *Store) TransferTx(ctx context.Context, params TransferTxParams) (Tr
 
 			result.FromEntry, err = q.CreateEntry(
 				ctx, CreateEntryParams{
-					AccountID: params.SourceAccountID,
-					Amount:    -params.Amount,
+					AccountID: arg.SourceAccountID,
+					Amount:    -arg.Amount,
 				},
 			)
 			if err != nil {
@@ -79,8 +79,8 @@ func (store *Store) TransferTx(ctx context.Context, params TransferTxParams) (Tr
 
 			result.ToEntry, err = q.CreateEntry(
 				ctx, CreateEntryParams{
-					AccountID: params.DestinationAccountID,
-					Amount:    params.Amount,
+					AccountID: arg.DestinationAccountID,
+					Amount:    arg.Amount,
 				},
 			)
 			if err != nil {
@@ -88,13 +88,13 @@ func (store *Store) TransferTx(ctx context.Context, params TransferTxParams) (Tr
 			}
 
 			// Order transaction queries to prevent deadlock
-			if params.SourceAccountID < params.DestinationAccountID {
+			if arg.SourceAccountID < arg.DestinationAccountID {
 				result.SourceAccount, result.DestinationAccount, err = transfer(
-					ctx, q, params.SourceAccountID, params.DestinationAccountID, params.Amount,
+					ctx, q, arg.SourceAccountID, arg.DestinationAccountID, arg.Amount,
 				)
 			} else {
 				result.DestinationAccount, result.SourceAccount, err = transfer(
-					ctx, q, params.DestinationAccountID, params.SourceAccountID, -params.Amount,
+					ctx, q, arg.DestinationAccountID, arg.SourceAccountID, -arg.Amount,
 				)
 			}
 

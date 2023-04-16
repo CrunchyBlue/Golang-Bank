@@ -2,6 +2,9 @@ build: start_postgres sleep create_db migrate_up
 
 destroy: stop_postgres rm_postgres
 
+server:
+	go run main.go
+
 start_postgres:
 	docker run --name postgres -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d -p 5432:5432 postgres:alpine
 
@@ -31,3 +34,5 @@ test:
 	
 sleep:
 	sleep 3
+	
+.PHONY: build destroy server start_postgres stop_postgres rm_postgres create_db drop_db migrate_up migrate_down sqlc_generate test sleep

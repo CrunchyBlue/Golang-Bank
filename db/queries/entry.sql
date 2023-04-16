@@ -9,11 +9,18 @@ SELECT *
 FROM entry
 WHERE id = $1;
 
--- name: ListEntries :many
+-- name: GetEntries :many
 SELECT *
 FROM entry
 ORDER BY id
 LIMIT $1 OFFSET $2;
+
+-- name: GetEntriesForAccount :many
+SELECT *
+FROM entry
+WHERE account_id = $1
+ORDER BY id
+    LIMIT $2 OFFSET $3;
 
 -- name: UpdateEntry :one
 UPDATE entry
