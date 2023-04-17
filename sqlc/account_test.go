@@ -103,7 +103,8 @@ func TestDeleteAccount(t *testing.T) {
 
 func TestGetAccounts(t *testing.T) {
 	for i := 0; i < 10; i++ {
-		createRandomAccount()
+		_, _, err := createRandomAccount()
+		require.NoError(t, err)
 	}
 
 	arg := GetAccountsParams{
