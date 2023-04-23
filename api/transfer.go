@@ -205,6 +205,11 @@ func (server *Server) updateTransfer(ctx *gin.Context) {
 
 	transfer, err := server.store.UpdateTransfer(ctx, arg)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 

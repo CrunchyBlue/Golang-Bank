@@ -62,7 +62,7 @@ func (server *Server) getAccount(ctx *gin.Context) {
 
 type createAccountRequest struct {
 	Owner    string `json:"owner" binding:"required"`
-	Currency string `json:"currency" binding:"required,oneof=USD EUR"`
+	Currency string `json:"currency" binding:"required,oneof=USD EUR CAD"`
 }
 
 func (server *Server) createAccount(ctx *gin.Context) {
@@ -94,7 +94,7 @@ type updateAccountUriParams struct {
 type updateAccountBody struct {
 	Owner    string `json:"owner" binding:"required"`
 	Balance  int64  `json:"balance" binding:"required"`
-	Currency string `json:"currency" binding:"required,oneof=USD EUR"`
+	Currency string `json:"currency" binding:"required,oneof=USD EUR CAD"`
 }
 
 type updateAccountRequest struct {
@@ -124,6 +124,11 @@ func (server *Server) updateAccount(ctx *gin.Context) {
 
 	account, err := server.store.UpdateAccount(ctx, arg)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
@@ -163,6 +168,11 @@ func (server *Server) updateAccountBalance(ctx *gin.Context) {
 
 	account, err := server.store.UpdateAccountBalance(ctx, arg)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 

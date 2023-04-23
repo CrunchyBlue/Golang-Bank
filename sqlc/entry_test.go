@@ -47,7 +47,7 @@ func TestUpdateEntry(t *testing.T) {
 
 	arg := UpdateEntryParams{
 		ID:     entry1.ID,
-		Amount: util.RandomMoney(),
+		Amount: util.RandomInt(0, 1000),
 	}
 
 	entry2, err := testQueries.UpdateEntry(context.Background(), arg)

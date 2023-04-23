@@ -52,7 +52,7 @@ func TestUpdateTransfer(t *testing.T) {
 
 	arg := UpdateTransferParams{
 		ID:     transfer1.ID,
-		Amount: util.RandomMoney(),
+		Amount: util.RandomInt(0, 1000),
 	}
 
 	transfer2, err := testQueries.UpdateTransfer(context.Background(), arg)

@@ -17,7 +17,7 @@ var testDB *sql.DB
 func createRandomAccount() (Account, CreateAccountParams, error) {
 	arg := CreateAccountParams{
 		Owner:    util.RandomOwner(),
-		Balance:  util.RandomMoney(),
+		Balance:  util.RandomInt(0, 1000),
 		Currency: util.RandomCurrency(),
 	}
 
@@ -29,7 +29,7 @@ func createRandomAccount() (Account, CreateAccountParams, error) {
 func createRandomEntry(accountId int64) (Entry, CreateEntryParams, error) {
 	arg := CreateEntryParams{
 		AccountID: accountId,
-		Amount:    util.RandomMoney(),
+		Amount:    util.RandomInt(0, 1000),
 	}
 
 	entry, err := testQueries.CreateEntry(context.Background(), arg)
@@ -41,7 +41,7 @@ func createRandomTransfer(sourceAccountId int64, destinationAccountId int64) (Tr
 	arg := CreateTransferParams{
 		DestinationAccountID: destinationAccountId,
 		SourceAccountID:      sourceAccountId,
-		Amount:               util.RandomMoney(),
+		Amount:               util.RandomInt(0, 1000),
 	}
 
 	transfer, err := testQueries.CreateTransfer(context.Background(), arg)
