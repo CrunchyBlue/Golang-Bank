@@ -339,46 +339,49 @@ func TestGetInboundTransfersForAccountAPI(t *testing.T) {
 }
 
 func TestCreateTransferAPI(t *testing.T) {
-	sourceAccountID := util.RandomInt(1, 1000)
-	destinationAccountID := util.RandomInt(1, 1000)
-	amount := util.RandomInt(1, 1000)
+	accounts := generateMockAccounts(2)
 
-	transfer := db.Transfer{
-		ID:                   util.RandomInt(1, 1000),
-		SourceAccountID:      sourceAccountID,
-		DestinationAccountID: destinationAccountID,
-		Amount:               amount,
-	}
+	accounts[0].Currency = util.USD
+	accounts[1].Currency = util.USD
+
+	amount := util.RandomInt(1, 1000)
+	currency := util.USD
 
 	testCases := []struct {
 		name                 string
 		sourceAccountID      int64
 		destinationAccountID int64
 		amount               int64
+		currency             string
 		buildStubs           func(store *mockdb.MockStore)
 		checkResponse        func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name:                 "OK",
-			sourceAccountID:      sourceAccountID,
-			destinationAccountID: destinationAccountID,
+			sourceAccountID:      accounts[0].ID,
+			destinationAccountID: accounts[1].ID,
 			amount:               amount,
+			currency:             currency,
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().CreateTransfer(gomock.Any(), gomock.Any()).Times(1).Return(transfer, nil)
+				store.EXPECT().GetAccount(gomock.Any(), gomock.Eq(accounts[0].ID)).Times(1).Return(accounts[0], nil)
+				store.EXPECT().GetAccount(gomock.Any(), gomock.Eq(accounts[1].ID)).Times(1).Return(accounts[1], nil)
+				store.EXPECT().TransferTx(gomock.Any(), gomock.Any()).Times(1)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
-				requireBodyMatchesCreatedTransfer(t, recorder.Body, transfer)
 			},
 		},
 		{
 			name:                 "InternalError",
-			sourceAccountID:      sourceAccountID,
-			destinationAccountID: destinationAccountID,
+			sourceAccountID:      accounts[0].ID,
+			destinationAccountID: accounts[1].ID,
 			amount:               amount,
+			currency:             currency,
 			buildStubs: func(store *mockdb.MockStore) {
-				store.EXPECT().CreateTransfer(gomock.Any(), gomock.Any()).Times(1).Return(
-					db.Transfer{}, sql.ErrConnDone,
+				store.EXPECT().GetAccount(gomock.Any(), gomock.Eq(accounts[0].ID)).Times(1).Return(accounts[0], nil)
+				store.EXPECT().GetAccount(gomock.Any(), gomock.Eq(accounts[1].ID)).Times(1).Return(accounts[1], nil)
+				store.EXPECT().TransferTx(gomock.Any(), gomock.Any()).Times(1).Return(
+					db.TransferTxResult{}, sql.ErrConnDone,
 				)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
@@ -413,8 +416,9 @@ func TestCreateTransferAPI(t *testing.T) {
 				url := fmt.Sprint("/transfer")
 
 				jsonEntry := fmt.Sprintf(
-					`{"source_account_id": %d, "destination_account_id": %d, "amount": %d}`, tc.sourceAccountID,
-					tc.destinationAccountID, tc.amount,
+					`{"source_account_id": %d, "destination_account_id": %d, "amount": %d, "currency": "%s"}`,
+					tc.sourceAccountID,
+					tc.destinationAccountID, tc.amount, tc.currency,
 				)
 				jsonBody := []byte(jsonEntry)
 				bodyReader := bytes.NewReader(jsonBody)
@@ -469,7 +473,7 @@ func TestUpdateTransferAPI(t *testing.T) {
 		},
 		{
 			name:       "NotFound",
-			transferID: -1,
+			transferID: expectedTransfer.ID,
 			amount:     amount,
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().UpdateTransfer(gomock.Any(), gomock.Any()).Times(1).Return(
@@ -641,19 +645,6 @@ func requireBodyMatchesTransfers(t *testing.T, body *bytes.Buffer, transfers []d
 	for i, _ := range transfers {
 		require.Equal(t, transfers[i], fetchedTransfers[i])
 	}
-}
-
-func requireBodyMatchesCreatedTransfer(t *testing.T, body *bytes.Buffer, transfer db.Transfer) {
-	data, err := io.ReadAll(body)
-	require.NoError(t, err)
-
-	var createdTransfer db.Transfer
-	err = json.Unmarshal(data, &createdTransfer)
-	require.NoError(t, err)
-
-	require.Equal(t, transfer.SourceAccountID, createdTransfer.SourceAccountID)
-	require.Equal(t, transfer.DestinationAccountID, createdTransfer.DestinationAccountID)
-	require.Equal(t, transfer.Amount, createdTransfer.Amount)
 }
 
 func requireBodyMatchesUpdatedTransfer(

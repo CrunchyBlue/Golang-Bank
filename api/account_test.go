@@ -296,7 +296,7 @@ func TestUpdateAccountAPI(t *testing.T) {
 		},
 		{
 			name:      "NotFound",
-			accountID: -1,
+			accountID: account.ID,
 			owner:     owner,
 			currency:  currency,
 			balance:   balance,
@@ -411,7 +411,7 @@ func TestUpdateAccountBalanceAPI(t *testing.T) {
 		},
 		{
 			name:      "NotFound",
-			accountID: -1,
+			accountID: account.ID,
 			amount:    amount,
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().UpdateAccountBalance(gomock.Any(), gomock.Any()).Times(1).Return(

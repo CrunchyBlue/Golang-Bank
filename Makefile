@@ -23,8 +23,14 @@ drop_db:
 migrate_up:
 	migrate -path db/migrations -database "postgresql://root:secret@localhost:5432/bank?sslmode=disable" -verbose up
 
+migrate_up_one:
+	migrate -path db/migrations -database "postgresql://root:secret@localhost:5432/bank?sslmode=disable" -verbose up 1
+
 migrate_down:
 	migrate -path db/migrations -database "postgresql://root:secret@localhost:5432/bank?sslmode=disable" -verbose down
+
+migrate_down_one:
+	migrate -path db/migrations -database "postgresql://root:secret@localhost:5432/bank?sslmode=disable" -verbose down 1
 	
 sqlc_generate:
 	sqlc generate
@@ -38,4 +44,4 @@ test:
 sleep:
 	sleep 3
 	
-.PHONY: build destroy server start_postgres stop_postgres rm_postgres create_db drop_db migrate_up migrate_down sqlc_generate mock test sleep
+.PHONY: build destroy server start_postgres stop_postgres rm_postgres create_db drop_db migrate_up migrate_down migrate_down_one sqlc_generate mock test sleep

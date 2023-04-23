@@ -371,7 +371,7 @@ func TestUpdateEntryAPI(t *testing.T) {
 		},
 		{
 			name:    "NotFound",
-			entryID: -1,
+			entryID: expectedEntry.ID,
 			amount:  amount,
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().UpdateEntry(gomock.Any(), gomock.Any()).Times(1).Return(

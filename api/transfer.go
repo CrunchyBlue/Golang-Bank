@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"fmt"
 	db "github.com/CrunchyBlue/Golang-Bank/sqlc"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -145,9 +146,10 @@ func (server *Server) getTransfer(ctx *gin.Context) {
 }
 
 type createTransferRequest struct {
-	SourceAccountID      int64 `json:"source_account_id" binding:"required,min=1"`
-	DestinationAccountID int64 `json:"destination_account_id" binding:"required,min=1"`
-	Amount               int64 `json:"amount" binding:"required,min=1"`
+	SourceAccountID      int64  `json:"source_account_id" binding:"required,min=1"`
+	DestinationAccountID int64  `json:"destination_account_id" binding:"required,min=1"`
+	Amount               int64  `json:"amount" binding:"required,min=1"`
+	Currency             string `json:"currency" binding:"required,currency"`
 }
 
 func (server *Server) createTransfer(ctx *gin.Context) {
@@ -158,15 +160,24 @@ func (server *Server) createTransfer(ctx *gin.Context) {
 		return
 	}
 
-	arg := db.CreateTransferParams{
+	if !server.validateAccount(ctx, req.SourceAccountID, req.Currency) {
+		return
+	}
+
+	if !server.validateAccount(ctx, req.DestinationAccountID, req.Currency) {
+		return
+	}
+
+	arg := db.TransferTxParams{
 		SourceAccountID:      req.SourceAccountID,
 		DestinationAccountID: req.DestinationAccountID,
 		Amount:               req.Amount,
 	}
 
-	transfer, err := server.store.CreateTransfer(ctx, arg)
+	transfer, err := server.store.TransferTx(ctx, arg)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
 	}
 
 	ctx.JSON(http.StatusOK, transfer)
@@ -211,6 +222,7 @@ func (server *Server) updateTransfer(ctx *gin.Context) {
 		}
 
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
 	}
 
 	ctx.JSON(http.StatusOK, transfer)
@@ -240,4 +252,25 @@ func (server *Server) deleteTransfer(ctx *gin.Context) {
 	}
 
 	ctx.Status(http.StatusOK)
+}
+
+func (server *Server) validateAccount(ctx *gin.Context, accountID int64, currency string) bool {
+	account, err := server.store.GetAccount(ctx, accountID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return false
+		}
+
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return false
+	}
+
+	if account.Currency != currency {
+		err := fmt.Errorf("account [%d] currency mismatch: %s vs %s", account.ID, account.Currency, currency)
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return false
+	}
+
+	return true
 }

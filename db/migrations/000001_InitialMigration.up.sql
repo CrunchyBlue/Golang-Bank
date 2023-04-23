@@ -57,4 +57,3 @@ create index transfers_destination_account_id_idx
 
 create index transfers_source_account_id_destination_account_id_idx
     on transfer (source_account_id, destination_account_id);
-

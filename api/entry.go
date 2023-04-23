@@ -123,6 +123,7 @@ func (server *Server) createEntry(ctx *gin.Context) {
 	entry, err := server.store.CreateEntry(ctx, arg)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
 	}
 
 	ctx.JSON(http.StatusOK, entry)
@@ -167,6 +168,7 @@ func (server *Server) updateEntry(ctx *gin.Context) {
 		}
 
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
 	}
 
 	ctx.JSON(http.StatusOK, entry)
