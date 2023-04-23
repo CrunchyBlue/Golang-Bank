@@ -103,7 +103,7 @@ func (server *Server) getEntry(ctx *gin.Context) {
 }
 
 type createEntryRequest struct {
-	AccountID int64 `json:"account_id" binding:"required"`
+	AccountID int64 `json:"account_id" binding:"required,min=1"`
 	Amount    int64 `json:"amount" binding:"required"`
 }
 
@@ -129,7 +129,7 @@ func (server *Server) createEntry(ctx *gin.Context) {
 }
 
 type updateEntryUriParams struct {
-	ID int64 `uri:"id" binding:"required"`
+	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
 type updateEntryBody struct {
@@ -165,7 +165,7 @@ func (server *Server) updateEntry(ctx *gin.Context) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
-		
+
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 

@@ -88,7 +88,7 @@ func (server *Server) createAccount(ctx *gin.Context) {
 }
 
 type updateAccountUriParams struct {
-	ID int64 `uri:"id" binding:"required"`
+	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
 type updateAccountBody struct {
@@ -136,7 +136,7 @@ func (server *Server) updateAccount(ctx *gin.Context) {
 }
 
 type updateAccountBalanceUriParams struct {
-	ID int64 `uri:"id" binding:"required"`
+	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
 type updateAccountBalanceBody struct {
@@ -172,7 +172,7 @@ func (server *Server) updateAccountBalance(ctx *gin.Context) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
-		
+
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 

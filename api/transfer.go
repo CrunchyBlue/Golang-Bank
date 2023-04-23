@@ -145,8 +145,8 @@ func (server *Server) getTransfer(ctx *gin.Context) {
 }
 
 type createTransferRequest struct {
-	SourceAccountID      int64 `json:"source_account_id" binding:"required"`
-	DestinationAccountID int64 `json:"destination_account_id" binding:"required"`
+	SourceAccountID      int64 `json:"source_account_id" binding:"required,min=1"`
+	DestinationAccountID int64 `json:"destination_account_id" binding:"required,min=1"`
 	Amount               int64 `json:"amount" binding:"required,min=1"`
 }
 
@@ -173,7 +173,7 @@ func (server *Server) createTransfer(ctx *gin.Context) {
 }
 
 type updateTransferUriParams struct {
-	ID int64 `uri:"id" binding:"required"`
+	ID int64 `uri:"id" binding:"required,min=1"`
 }
 
 type updateTransferBody struct {
@@ -209,7 +209,7 @@ func (server *Server) updateTransfer(ctx *gin.Context) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
-		
+
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
