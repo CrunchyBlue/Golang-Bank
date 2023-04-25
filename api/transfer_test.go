@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/CrunchyBlue/Golang-Bank/constants"
 	mockdb "github.com/CrunchyBlue/Golang-Bank/db/mock"
 	db "github.com/CrunchyBlue/Golang-Bank/sqlc"
 	"github.com/CrunchyBlue/Golang-Bank/util"
@@ -341,11 +342,11 @@ func TestGetInboundTransfersForAccountAPI(t *testing.T) {
 func TestCreateTransferAPI(t *testing.T) {
 	accounts := generateMockAccounts(2)
 
-	accounts[0].Currency = util.USD
-	accounts[1].Currency = util.USD
+	accounts[0].Currency = constants.USD
+	accounts[1].Currency = constants.USD
 
 	amount := util.RandomInt(1, 1000)
-	currency := util.USD
+	currency := constants.USD
 
 	testCases := []struct {
 		name                 string

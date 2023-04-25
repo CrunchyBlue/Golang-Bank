@@ -55,7 +55,7 @@ func TestUpdateAccount(t *testing.T) {
 
 	arg := UpdateAccountParams{
 		ID:       account1.ID,
-		Owner:    util.RandomOwner(),
+		Owner:    account1.Owner,
 		Balance:  util.RandomInt(0, 1000),
 		Currency: util.RandomCurrency(),
 	}

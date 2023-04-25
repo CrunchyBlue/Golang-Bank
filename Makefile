@@ -1,6 +1,6 @@
-build: start_postgres sleep create_db migrate_up
+dev: start_postgres sleep create_db migrate_up
 
-destroy: stop_postgres rm_postgres
+dev_destroy: stop_postgres rm_postgres
 
 server:
 	go run main.go
@@ -35,7 +35,7 @@ migrate_down_one:
 sqlc_generate:
 	sqlc generate
 
-mock:
+mockgen:
 	mockgen -package mockdb -destination db/mock/store.go github.com/CrunchyBlue/Golang-Bank/sqlc Store
 	
 test:
@@ -44,4 +44,4 @@ test:
 sleep:
 	sleep 3
 	
-.PHONY: build destroy server start_postgres stop_postgres rm_postgres create_db drop_db migrate_up migrate_down migrate_down_one sqlc_generate mock test sleep
+.PHONY: dev dev_destroy server start_postgres stop_postgres rm_postgres create_db drop_db migrate_up migrate_down migrate_down_one sqlc_generate mockgen test sleep

@@ -1,14 +1,10 @@
 package util
 
-const (
-	USD = "USD"
-	EUR = "EUR"
-	CAD = "CAD"
-)
+import "github.com/CrunchyBlue/Golang-Bank/constants"
 
 func IsSupportedCurrency(currency string) bool {
 	switch currency {
-	case USD, EUR, CAD:
+	case constants.USD, constants.EUR, constants.CAD:
 		return true
 	}
 	return false

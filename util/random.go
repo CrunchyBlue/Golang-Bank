@@ -1,12 +1,13 @@
 package util
 
 import (
+	"fmt"
+	"github.com/CrunchyBlue/Golang-Bank/constants"
 	"math/rand"
 	"strings"
 )
 
 const alphabet = "abcdefghijklmnopqrstuvwxyz"
-const numbers = "123456789"
 
 func RandomString(n int) string {
 	var sb strings.Builder
@@ -20,8 +21,12 @@ func RandomString(n int) string {
 	return sb.String()
 }
 
+func RandomEmail() string {
+	return fmt.Sprintf("%s@example.com", RandomString(10))
+}
+
 func RandomOwner() string {
-	return RandomString(6)
+	return RandomString(10)
 }
 
 func RandomInt(min, max int64) int64 {
@@ -30,9 +35,9 @@ func RandomInt(min, max int64) int64 {
 
 func RandomCurrency() string {
 	currencies := []string{
-		EUR,
-		USD,
-		CAD,
+		constants.USD,
+		constants.EUR,
+		constants.CAD,
 	}
 	n := len(currencies)
 	return currencies[rand.Intn(n)]

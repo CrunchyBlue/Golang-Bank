@@ -14,9 +14,28 @@ import (
 var testQueries *Queries
 var testDB *sql.DB
 
+func createRandomUser() (User, CreateUserParams, error) {
+	hashedPassword, err := util.HashPassword(util.RandomString(6))
+	if err != nil {
+		return User{}, CreateUserParams{}, err
+	}
+	arg := CreateUserParams{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+	}
+
+	user, err := testQueries.CreateUser(context.Background(), arg)
+
+	return user, arg, err
+}
+
 func createRandomAccount() (Account, CreateAccountParams, error) {
+	user, _, _ := createRandomUser()
+
 	arg := CreateAccountParams{
-		Owner:    util.RandomOwner(),
+		Owner:    user.Username,
 		Balance:  util.RandomInt(0, 1000),
 		Currency: util.RandomCurrency(),
 	}

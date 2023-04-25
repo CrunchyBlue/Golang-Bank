@@ -4,9 +4,24 @@ import (
 	db "github.com/CrunchyBlue/Golang-Bank/sqlc"
 	"github.com/CrunchyBlue/Golang-Bank/util"
 	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 )
+
+func generateMockUser(t *testing.T) (user db.User, password string) {
+	password = util.RandomString(6)
+	hashedPassword, err := util.HashPassword(password)
+	require.NoError(t, err)
+
+	user = db.User{
+		Username:       util.RandomOwner(),
+		HashedPassword: hashedPassword,
+		FullName:       util.RandomOwner(),
+		Email:          util.RandomEmail(),
+	}
+	return
+}
 
 func generateMockAccounts(numAccounts int) []db.Account {
 	var accounts []db.Account
