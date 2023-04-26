@@ -7,6 +7,7 @@ import (
 	"fmt"
 	mockdb "github.com/CrunchyBlue/Golang-Bank/db/mock"
 	db "github.com/CrunchyBlue/Golang-Bank/sqlc"
+	"github.com/CrunchyBlue/Golang-Bank/token"
 	"github.com/CrunchyBlue/Golang-Bank/util"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -14,21 +15,27 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestGetEntryAPI(t *testing.T) {
+	user, _ := generateMockUser(t)
 	accountID := util.RandomInt(1, 1000)
 	entry := generateMockEntries(1, accountID)[0]
 
 	testCases := []struct {
 		name          string
 		entryID       int64
+		setupAuth     func(t *testing.T, req *http.Request, tokenMaker token.Maker)
 		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name:    "OK",
 			entryID: entry.ID,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetEntry(gomock.Any(), gomock.Eq(entry.ID)).Times(1).Return(entry, nil)
 			},
@@ -40,6 +47,9 @@ func TestGetEntryAPI(t *testing.T) {
 		{
 			name:    "NotFound",
 			entryID: entry.ID,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetEntry(gomock.Any(), gomock.Eq(entry.ID)).Times(1).Return(
 					db.Entry{}, sql.ErrNoRows,
@@ -52,6 +62,9 @@ func TestGetEntryAPI(t *testing.T) {
 		{
 			name:    "InternalError",
 			entryID: entry.ID,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetEntry(gomock.Any(), gomock.Eq(entry.ID)).Times(1).Return(
 					db.Entry{}, sql.ErrConnDone,
@@ -64,6 +77,9 @@ func TestGetEntryAPI(t *testing.T) {
 		{
 			name:    "BadRequest",
 			entryID: 0,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetEntry(gomock.Any(), gomock.Any()).Times(0)
 			},
@@ -84,12 +100,14 @@ func TestGetEntryAPI(t *testing.T) {
 				store := mockdb.NewMockStore(ctrl)
 				tc.buildStubs(store)
 
-				server := NewServer(store)
+				server := newTestServer(t, store)
 				recorder := httptest.NewRecorder()
 
 				url := fmt.Sprintf("/entry/%d", tc.entryID)
 				request, err := http.NewRequest(http.MethodGet, url, nil)
 				require.NoError(t, err)
+
+				tc.setupAuth(t, request, server.tokenMaker)
 
 				server.router.ServeHTTP(recorder, request)
 				tc.checkResponse(t, recorder)
@@ -99,6 +117,7 @@ func TestGetEntryAPI(t *testing.T) {
 }
 
 func TestGetEntriesAPI(t *testing.T) {
+	user, _ := generateMockUser(t)
 	accountID := util.RandomInt(1, 1000)
 	entries := generateMockEntries(10, accountID)
 
@@ -106,6 +125,7 @@ func TestGetEntriesAPI(t *testing.T) {
 		name          string
 		pageSize      int
 		pageNumber    int
+		setupAuth     func(t *testing.T, req *http.Request, tokenMaker token.Maker)
 		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
@@ -113,6 +133,9 @@ func TestGetEntriesAPI(t *testing.T) {
 			name:       "OK",
 			pageSize:   10,
 			pageNumber: 1,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetEntries(gomock.Any(), gomock.Any()).Times(1).Return(entries, nil)
 			},
@@ -125,6 +148,9 @@ func TestGetEntriesAPI(t *testing.T) {
 			name:       "InternalError",
 			pageSize:   10,
 			pageNumber: 1,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetEntries(gomock.Any(), gomock.Any()).Times(1).Return(
 					[]db.Entry{}, sql.ErrConnDone,
@@ -138,6 +164,9 @@ func TestGetEntriesAPI(t *testing.T) {
 			name:       "BadRequest",
 			pageSize:   -1,
 			pageNumber: -1,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetEntries(gomock.Any(), gomock.Any()).Times(0)
 			},
@@ -158,12 +187,14 @@ func TestGetEntriesAPI(t *testing.T) {
 				store := mockdb.NewMockStore(ctrl)
 				tc.buildStubs(store)
 
-				server := NewServer(store)
+				server := newTestServer(t, store)
 				recorder := httptest.NewRecorder()
 
 				url := fmt.Sprintf("/entries?page_size=%d&page_number=%d", tc.pageSize, tc.pageNumber)
 				request, err := http.NewRequest(http.MethodGet, url, nil)
 				require.NoError(t, err)
+
+				tc.setupAuth(t, request, server.tokenMaker)
 
 				server.router.ServeHTTP(recorder, request)
 				tc.checkResponse(t, recorder)
@@ -173,6 +204,7 @@ func TestGetEntriesAPI(t *testing.T) {
 }
 
 func TestGetEntriesForAccountAPI(t *testing.T) {
+	user, _ := generateMockUser(t)
 	accountID := util.RandomInt(1, 1000)
 	entries := generateMockEntries(10, accountID)
 
@@ -181,6 +213,7 @@ func TestGetEntriesForAccountAPI(t *testing.T) {
 		accountID     int64
 		pageSize      int
 		pageNumber    int
+		setupAuth     func(t *testing.T, req *http.Request, tokenMaker token.Maker)
 		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
@@ -189,6 +222,9 @@ func TestGetEntriesForAccountAPI(t *testing.T) {
 			accountID:  accountID,
 			pageSize:   10,
 			pageNumber: 1,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetEntriesForAccount(gomock.Any(), gomock.Any()).Times(1).Return(entries, nil)
 			},
@@ -202,6 +238,9 @@ func TestGetEntriesForAccountAPI(t *testing.T) {
 			accountID:  accountID,
 			pageSize:   10,
 			pageNumber: 1,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetEntriesForAccount(gomock.Any(), gomock.Any()).Times(1).Return(
 					[]db.Entry{}, sql.ErrConnDone,
@@ -216,6 +255,9 @@ func TestGetEntriesForAccountAPI(t *testing.T) {
 			accountID:  accountID,
 			pageSize:   -1,
 			pageNumber: -1,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().GetEntriesForAccount(gomock.Any(), gomock.Any()).Times(0)
 			},
@@ -236,12 +278,14 @@ func TestGetEntriesForAccountAPI(t *testing.T) {
 				store := mockdb.NewMockStore(ctrl)
 				tc.buildStubs(store)
 
-				server := NewServer(store)
+				server := newTestServer(t, store)
 				recorder := httptest.NewRecorder()
 
 				url := fmt.Sprintf("/entries/%d?page_size=%d&page_number=%d", tc.accountID, tc.pageSize, tc.pageNumber)
 				request, err := http.NewRequest(http.MethodGet, url, nil)
 				require.NoError(t, err)
+
+				tc.setupAuth(t, request, server.tokenMaker)
 
 				server.router.ServeHTTP(recorder, request)
 				tc.checkResponse(t, recorder)
@@ -251,6 +295,7 @@ func TestGetEntriesForAccountAPI(t *testing.T) {
 }
 
 func TestCreateEntryAPI(t *testing.T) {
+	user, _ := generateMockUser(t)
 	accountID := util.RandomInt(1, 1000)
 	amount := util.RandomInt(-1000, 1000)
 
@@ -264,6 +309,7 @@ func TestCreateEntryAPI(t *testing.T) {
 		name          string
 		accountID     int64
 		amount        int64
+		setupAuth     func(t *testing.T, req *http.Request, tokenMaker token.Maker)
 		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
@@ -271,6 +317,9 @@ func TestCreateEntryAPI(t *testing.T) {
 			name:      "OK",
 			accountID: accountID,
 			amount:    amount,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().CreateEntry(gomock.Any(), gomock.Any()).Times(1).Return(entry, nil)
 			},
@@ -283,6 +332,9 @@ func TestCreateEntryAPI(t *testing.T) {
 			name:      "InternalError",
 			accountID: accountID,
 			amount:    amount,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().CreateEntry(gomock.Any(), gomock.Any()).Times(1).Return(
 					db.Entry{}, sql.ErrConnDone,
@@ -294,6 +346,9 @@ func TestCreateEntryAPI(t *testing.T) {
 		},
 		{
 			name: "BadRequest",
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().CreateEntry(gomock.Any(), gomock.Any()).Times(0)
 			},
@@ -314,7 +369,7 @@ func TestCreateEntryAPI(t *testing.T) {
 				store := mockdb.NewMockStore(ctrl)
 				tc.buildStubs(store)
 
-				server := NewServer(store)
+				server := newTestServer(t, store)
 				recorder := httptest.NewRecorder()
 
 				url := fmt.Sprint("/entry")
@@ -326,6 +381,8 @@ func TestCreateEntryAPI(t *testing.T) {
 				request, err := http.NewRequest(http.MethodPost, url, bodyReader)
 				require.NoError(t, err)
 
+				tc.setupAuth(t, request, server.tokenMaker)
+
 				server.router.ServeHTTP(recorder, request)
 				tc.checkResponse(t, recorder)
 			},
@@ -334,6 +391,7 @@ func TestCreateEntryAPI(t *testing.T) {
 }
 
 func TestUpdateEntryAPI(t *testing.T) {
+	user, _ := generateMockUser(t)
 	accountID := util.RandomInt(1, 1000)
 	entry := generateMockEntries(1, accountID)[0]
 
@@ -350,6 +408,7 @@ func TestUpdateEntryAPI(t *testing.T) {
 		name          string
 		entryID       int64
 		amount        int64
+		setupAuth     func(t *testing.T, req *http.Request, tokenMaker token.Maker)
 		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
@@ -357,6 +416,9 @@ func TestUpdateEntryAPI(t *testing.T) {
 			name:    "OK",
 			entryID: expectedEntry.ID,
 			amount:  amount,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().UpdateEntry(gomock.Any(), gomock.Any()).Times(1).Return(
 					expectedEntry, nil,
@@ -373,6 +435,9 @@ func TestUpdateEntryAPI(t *testing.T) {
 			name:    "NotFound",
 			entryID: expectedEntry.ID,
 			amount:  amount,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().UpdateEntry(gomock.Any(), gomock.Any()).Times(1).Return(
 					db.Entry{}, sql.ErrNoRows,
@@ -386,6 +451,9 @@ func TestUpdateEntryAPI(t *testing.T) {
 			name:    "InternalError",
 			entryID: expectedEntry.ID,
 			amount:  amount,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().UpdateEntry(gomock.Any(), gomock.Any()).Times(1).Return(
 					db.Entry{}, sql.ErrConnDone,
@@ -399,6 +467,9 @@ func TestUpdateEntryAPI(t *testing.T) {
 			name:    "BadRequest",
 			entryID: 0,
 			amount:  amount,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().UpdateEntry(gomock.Any(), gomock.Any()).Times(0)
 			},
@@ -419,7 +490,7 @@ func TestUpdateEntryAPI(t *testing.T) {
 				store := mockdb.NewMockStore(ctrl)
 				tc.buildStubs(store)
 
-				server := NewServer(store)
+				server := newTestServer(t, store)
 				recorder := httptest.NewRecorder()
 
 				url := fmt.Sprintf("/entry/%d", tc.entryID)
@@ -433,6 +504,8 @@ func TestUpdateEntryAPI(t *testing.T) {
 				request, err := http.NewRequest(http.MethodPut, url, bodyReader)
 				require.NoError(t, err)
 
+				tc.setupAuth(t, request, server.tokenMaker)
+
 				server.router.ServeHTTP(recorder, request)
 				tc.checkResponse(t, recorder)
 			},
@@ -441,18 +514,23 @@ func TestUpdateEntryAPI(t *testing.T) {
 }
 
 func TestDeleteEntryAPI(t *testing.T) {
+	user, _ := generateMockUser(t)
 	accountID := util.RandomInt(1, 1000)
 	entry := generateMockEntries(1, accountID)[0]
 
 	testCases := []struct {
 		name          string
 		entryID       int64
+		setupAuth     func(t *testing.T, req *http.Request, tokenMaker token.Maker)
 		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name:    "OK",
 			entryID: entry.ID,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().DeleteEntry(gomock.Any(), gomock.Eq(entry.ID)).Times(1).Return(nil)
 			},
@@ -463,6 +541,9 @@ func TestDeleteEntryAPI(t *testing.T) {
 		{
 			name:    "NotFound",
 			entryID: entry.ID,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().DeleteEntry(gomock.Any(), gomock.Eq(entry.ID)).Times(1).Return(
 					sql.ErrNoRows,
@@ -475,6 +556,9 @@ func TestDeleteEntryAPI(t *testing.T) {
 		{
 			name:    "InternalError",
 			entryID: entry.ID,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().DeleteEntry(gomock.Any(), gomock.Eq(entry.ID)).Times(1).Return(
 					sql.ErrConnDone,
@@ -487,6 +571,9 @@ func TestDeleteEntryAPI(t *testing.T) {
 		{
 			name:    "BadRequest",
 			entryID: 0,
+			setupAuth: func(t *testing.T, req *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, req, tokenMaker, authorizationTypeBearer, user.Username, time.Minute)
+			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().DeleteEntry(gomock.Any(), gomock.Any()).Times(0)
 			},
@@ -507,12 +594,14 @@ func TestDeleteEntryAPI(t *testing.T) {
 				store := mockdb.NewMockStore(ctrl)
 				tc.buildStubs(store)
 
-				server := NewServer(store)
+				server := newTestServer(t, store)
 				recorder := httptest.NewRecorder()
 
 				url := fmt.Sprintf("/entry/%d", tc.entryID)
 				request, err := http.NewRequest(http.MethodDelete, url, nil)
 				require.NoError(t, err)
+
+				tc.setupAuth(t, request, server.tokenMaker)
 
 				server.router.ServeHTTP(recorder, request)
 				tc.checkResponse(t, recorder)

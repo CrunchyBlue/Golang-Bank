@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
+	"time"
 )
 
 func generateMockUser(t *testing.T) (user db.User, password string) {
@@ -23,14 +24,14 @@ func generateMockUser(t *testing.T) (user db.User, password string) {
 	return
 }
 
-func generateMockAccounts(numAccounts int) []db.Account {
+func generateMockAccounts(owner string, numAccounts int) []db.Account {
 	var accounts []db.Account
 
 	for i := 0; i < numAccounts; i++ {
 		accounts = append(
 			accounts, db.Account{
 				ID:       util.RandomInt(1, 1000),
-				Owner:    util.RandomOwner(),
+				Owner:    owner,
 				Balance:  util.RandomInt(0, 1000),
 				Currency: util.RandomCurrency(),
 			},
@@ -68,6 +69,18 @@ func generateMockTransfers(numTransfers int, sourceAccountID int64, destinationA
 		)
 	}
 	return transfers
+}
+
+func newTestServer(t *testing.T, store db.Store) *Server {
+	config := util.Config{
+		AccessTokenSymmetricKey: util.RandomString(32),
+		AccessTokenDuration:     time.Minute,
+	}
+
+	server, err := NewServer(store, config)
+	require.NoError(t, err)
+
+	return server
 }
 
 func TestMain(m *testing.M) {
