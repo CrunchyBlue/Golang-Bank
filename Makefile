@@ -12,7 +12,7 @@ rm_bank_network:
 	docker network rm bank-network
 
 start_postgres:
-	docker run --name postgres --network bank-network -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d -p 5432:5432 postgres:alpine
+	docker run --name postgres --network bank-network -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d -p 5432:5432 postgres:15.2-alpine3.17
 
 stop_postgres:
 	docker stop postgres
