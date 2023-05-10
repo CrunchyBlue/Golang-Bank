@@ -1,16 +1,16 @@
-name: ci-test
+name: ci
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
+    types: [ opened, merged ]
     branches: [ master ]
 
 jobs:
   test:
+    if: >-
+      github.event.pull_request == 'opened'
     name: Test
     runs-on: ubuntu-latest
-    
     services:
       postgres:
         image: postgres:alpine
@@ -20,31 +20,47 @@ jobs:
           POSTGRES_DB: bank
         options: >-
           --health-cmd pg_isready
-          --health-interval 10s
+          --health-interval 5s
           --health-timeout 5s
           --health-retries 5
         ports:
           - 5432:5432
-    
     steps:
-      - name: Set up Go 1.x
+      - name: Set up Go 1.2x
         uses: actions/setup-go@v4
         with:
           go-version: ^1.20
         id: go
-
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
-
       - name: Install golang-migrate
         run: |
           curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-amd64.tar.gz | tar xvz
           sudo mv migrate /usr/bin/migrate
           which migrate
-
       - name: Run migrations
         run: make migrate_up
-
       - name: Test
         run: make test
-          
+  build:
+    if: >-
+      github.event.pull_request == 'merged'
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::691474667905:role/GithubActions
+          aws-region: us-east-1
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Build, tag, and push docker image to Amazon ECR
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: golang-bank
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
