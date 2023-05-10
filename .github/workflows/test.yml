@@ -1,14 +1,12 @@
-name: ci
+name: ci-test
 
 on:
   pull_request:
-    types: [ opened, merged ]
+    types: [ opened ]
     branches: [ master ]
 
 jobs:
   test:
-    if: >-
-      github.event.pull_request == 'opened'
     name: Test
     runs-on: ubuntu-latest
     services:
@@ -42,25 +40,3 @@ jobs:
         run: make migrate_up
       - name: Test
         run: make test
-  build:
-    if: >-
-      github.event.pull_request == 'merged'
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: arn:aws:iam::691474667905:role/GithubActions
-          aws-region: us-east-1
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-      - name: Build, tag, and push docker image to Amazon ECR
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: golang-bank
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
