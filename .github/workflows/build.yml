@@ -1,8 +1,7 @@
 name: ci-build
 
 on:
-  pull_request:
-    types: [ merged ]
+  push:
     branches: [ master ]
 
 jobs:
