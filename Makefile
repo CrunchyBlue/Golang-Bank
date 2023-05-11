@@ -14,6 +14,12 @@ aws_sso_login:
 aws_get_secrets:
 	aws secretsmanager get-secret-value --secret-id golang-bank --region us-east-1 --profile david --query SecretString --output text | jq -r 'to_entries|map("\(.key)=\(.value)")|.[]' > app.env
 
+update_kubeconfig:
+	aws eks update-kubeconfig --name golang-bank --region us-east-1
+
+k9s:
+	k9s
+
 create_bank_network:
 	docker network create bank-network
 
