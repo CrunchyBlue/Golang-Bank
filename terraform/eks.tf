@@ -18,6 +18,7 @@ resource "aws_eks_node_group" "node_group" {
   cluster_name    = aws_eks_cluster.cluster.name
   node_group_name = var.app
   node_role_arn   = aws_iam_role.node_role.arn
+  instance_types  = ["t3.small"]
   subnet_ids      = [
     aws_default_subnet.default_az1.id, aws_default_subnet.default_az2.id, aws_default_subnet.default_az3.id
   ]

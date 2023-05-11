@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: golang-bank-api
-          image: 691474667905.dkr.ecr.us-east-1.amazonaws.com/golang-bank:1b2917e885d6465435fbeb7c6e0b2efdef6ae358
+          image: 691474667905.dkr.ecr.us-east-1.amazonaws.com/golang-bank:6f21f04a1595036fb442bb0604e01adfe854be8b
           ports:
             - containerPort: 8080
               
