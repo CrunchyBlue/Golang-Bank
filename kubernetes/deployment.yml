@@ -17,6 +17,7 @@ spec:
       containers:
         - name: golang-bank-api
           image: 691474667905.dkr.ecr.us-east-1.amazonaws.com/golang-bank:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
               
