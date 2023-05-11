@@ -18,10 +18,16 @@ resource "aws_eks_node_group" "node_group" {
   cluster_name    = aws_eks_cluster.cluster.name
   node_group_name = var.app
   node_role_arn   = aws_iam_role.node_role.arn
+  ami_type        = "AL2_x86_64"
+  capacity_type   = "ON_DEMAND"
+  disk_size       = 10
+  release_version = "1.26.2-20230501"
+  version         = "1.26"
   instance_types  = ["t3.small"]
   subnet_ids      = [
     aws_default_subnet.default_az1.id, aws_default_subnet.default_az2.id, aws_default_subnet.default_az3.id
   ]
+
 
   scaling_config {
     desired_size = 1
