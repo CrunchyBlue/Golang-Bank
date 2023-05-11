@@ -17,6 +17,12 @@ aws_get_secrets:
 update_kubeconfig:
 	aws eks update-kubeconfig --name golang-bank --region us-east-1
 
+install_ingress_controller:
+	kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.7.1/deploy/static/provider/aws/deploy.yaml
+
+install_cert_manager:
+	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml
+
 k9s:
 	k9s
 
