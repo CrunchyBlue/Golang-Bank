@@ -7,11 +7,11 @@ resource "aws_db_instance" "db" {
   engine_version               = "15.2"
   instance_class               = "db.t3.micro"
   license_model                = "postgresql-license"
-  manage_master_user_password  = true
   multi_az                     = false
   network_type                 = "IPV4"
   option_group_name            = "default:postgres-15"
   parameter_group_name         = "default.postgres15"
+  password                     = random_password.password.result
   performance_insights_enabled = true
   publicly_accessible          = true
   skip_final_snapshot          = true
