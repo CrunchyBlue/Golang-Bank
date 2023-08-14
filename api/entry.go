@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	db "github.com/CrunchyBlue/Golang-Bank/sqlc"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -90,7 +91,7 @@ func (server *Server) getEntry(ctx *gin.Context) {
 
 	entry, err := server.store.GetEntry(ctx, req.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
@@ -162,7 +163,7 @@ func (server *Server) updateEntry(ctx *gin.Context) {
 
 	entry, err := server.store.UpdateEntry(ctx, arg)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
@@ -188,7 +189,7 @@ func (server *Server) deleteEntry(ctx *gin.Context) {
 
 	err := server.store.DeleteEntry(ctx, req.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
