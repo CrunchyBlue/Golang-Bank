@@ -135,7 +135,7 @@ func (server *Server) getTransfer(ctx *gin.Context) {
 
 	transfer, err := server.store.GetTransfer(ctx, req.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
@@ -227,7 +227,7 @@ func (server *Server) updateTransfer(ctx *gin.Context) {
 
 	transfer, err := server.store.UpdateTransfer(ctx, arg)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
@@ -253,7 +253,7 @@ func (server *Server) deleteTransfer(ctx *gin.Context) {
 
 	err := server.store.DeleteTransfer(ctx, req.ID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
@@ -268,7 +268,7 @@ func (server *Server) deleteTransfer(ctx *gin.Context) {
 func (server *Server) validateAccount(ctx *gin.Context, accountID int64, currency string) (db.Account, bool) {
 	account, err := server.store.GetAccount(ctx, accountID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return account, false
 		}

@@ -71,10 +71,15 @@ func generateMockTransfers(numTransfers int, sourceAccountID int64, destinationA
 	return transfers
 }
 
+func generateMockLogin() {
+
+}
+
 func newTestServer(t *testing.T, store db.Store) *Server {
 	config := util.Config{
 		AccessTokenSymmetricKey: util.RandomString(32),
 		AccessTokenDuration:     time.Minute,
+		RefreshTokenDuration:    time.Minute,
 	}
 
 	server, err := NewServer(store, config)

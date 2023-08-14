@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
+	_ "github.com/go-playground/validator/v10"
 )
 
 type Server struct {
@@ -47,6 +48,9 @@ func (server *Server) mapRoutes() {
 	// User
 	router.POST("/user", server.createUser)
 	router.POST("/user/login", server.loginUser)
+
+	// Session
+	router.POST("/session/renew", server.renewAccessToken)
 
 	authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
 

@@ -6,11 +6,12 @@ import (
 )
 
 type Config struct {
+	AccessTokenDuration     time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
+	AccessTokenSymmetricKey string        `mapstructure:"ACCESS_TOKEN_SYMMETRIC_KEY"`
 	DBDriver                string        `mapstructure:"DB_DRIVER"`
 	DBSource                string        `mapstructure:"DB_SOURCE"`
+	RefreshTokenDuration    time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
 	ServerAddress           string        `mapstructure:"SERVER_ADDRESS"`
-	AccessTokenSymmetricKey string        `mapstructure:"ACCESS_TOKEN_SYMMETRIC_KEY"`
-	AccessTokenDuration     time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 }
 
 func LoadConfig(path string) (config Config, err error) {
